@@ -42,7 +42,7 @@ my $diff_seconds = $here->epoch - $slavedt->epoch;
 # print "diff: $diff_seconds\n";
 
 my ($days, $hours, $minutes, $seconds) = $dur->in_units('days', 'hours', 'minutes', 'seconds');
-printf "DNSBL last updated on slave [$nameserver]  %d days, %02d:%02d:%02d ago\n",
+printf "DNSBL last updated on slave [$nameserver] %d days, %02d:%02d:%02d ago\n",
 		$days, $hours, $minutes, $seconds;
 
 if ($diff_seconds > $crit_diff) {
@@ -83,9 +83,9 @@ sub TXT {
 sub terminate {
 	my ($status) = @_;
 
-	if (defined($statusfile) && open(SEMA, "> $statusfile")) {
-		print SEMA $ERRS[$status], "\n";
-		close SEMA;
+	if (defined($statusfile) && open(STATUS, "> $statusfile")) {
+		print STATUS $ERRS[$status], "\n";
+		close STATUS;
 	}
 	exit($status);
 }
@@ -134,7 +134,7 @@ Since mid October 2010, the Nix Spam DNSBL carries a specific record in it
 denoting the ISO 8601 time of the server (i.e. of the master zone). This approximate
 time stamp can be used to determine how fresh a DNS slave of the zone is.
 
-After a zone transfer, the master's time stamp is transferred along to the zone's
+During a zone transfer, the master's time stamp is transferred along to the zone's
 slave servers. Administrators on the slaves can now compare that time stamp to
 their own server time and thus determine if zone transfers are occurring in a 
 timely fashion.
@@ -197,7 +197,7 @@ the diagnostic message contains further information.
 
 =head1 AVAILABILITY
 
-
+L<http://github.com/jpmens/check_nix>
 
 =head1 AUTHOR
 
