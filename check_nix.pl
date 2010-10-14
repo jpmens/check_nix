@@ -11,9 +11,9 @@ use vars qw($opt_v $opt_w $opt_c $opt_N $opt_D $opt_S);
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3);
 my @ERRS = qw(OK WARNING CRITICAL UNKNOWN);
 
-my $warn_diff	= 30;
-my $crit_diff	= 60;
-my $nameserver	=  '192.168.1.20';
+my $warn_diff	= (10 * 60);
+my $crit_diff	= (30 * 60);
+my $nameserver	=  '127.0.0.1';
 my $domain	= '0.0.0.0.ix.dnsbl.manitu.net';
 my $semafile	= undef;
 
@@ -166,6 +166,16 @@ Number of seconds difference between exiting with a CRITICAL code.
 =item I<-S> or I<--semaphore>
 
 Specify a file name (no default) into which B<check_nix> writes a verbose status code (i.e. C<"OK">, C"<WARNING>", ...) to indicate the status of the last check. An external process may monitor this file to do something clever, such as stop a process, lock a firewall, etc. Note that this file must be writable by the caller.
+
+Example:
+
+	$ rm /tmp/myfile
+	$ check_nix -S /tmp/myfile
+	DNSBL last updated on slave [192.168.1.20]  0 days, 00:00:20 ago
+	$ cat /tmp/myfile
+	OK
+	$
+
 
 =back
 
