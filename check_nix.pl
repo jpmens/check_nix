@@ -15,7 +15,7 @@ my $warn_diff	= (10 * 60);
 my $crit_diff	= (30 * 60);
 my $nameserver	=  '127.0.0.1';
 my $domain	= '0.0.0.0.ix.dnsbl.manitu.net';
-my $semafile	= undef;
+my $statusfile	= undef;
 
 Getopt::Long::Configure('bundling');
 my $status = do_args();
@@ -38,6 +38,8 @@ my $dur = $here->subtract_datetime($slavedt);
 my $slave_secs = $slavedt->epoch();
 
 my $diff_seconds = $here->epoch - $slavedt->epoch;
+
+# print "diff: $diff_seconds\n";
 
 my ($days, $hours, $minutes, $seconds) = $dur->in_units('days', 'hours', 'minutes', 'seconds');
 printf "DNSBL last updated on slave [$nameserver]  %d days, %02d:%02d:%02d ago\n",
@@ -81,7 +83,7 @@ sub TXT {
 sub terminate {
 	my ($status) = @_;
 
-	if (defined($semafile) && open(SEMA, "> $semafile")) {
+	if (defined($statusfile) && open(SEMA, "> $statusfile")) {
 		print SEMA $ERRS[$status], "\n";
 		close SEMA;
 	}
@@ -92,17 +94,17 @@ sub do_args(){
 	unless (GetOptions(
 		"D:s" => \$opt_D, "domain:s" => \$opt_D,
 		"N:s" => \$opt_N, "nameserver:s" => \$opt_N,
-		"S:s" => \$opt_S, "semaphore:s" => \$opt_S,
+		"S:s" => \$opt_S, "statusfile:s" => \$opt_S,
 		"w=i" => \$opt_w, "warning=i"  => \$opt_w,
 		"c=i" => \$opt_c, "critical=i" => \$opt_c,
 	)) {
-		print STDERR "Usage: $0 [-D domain] [-N address] [-w seconds] [-c seconds] [-S semaphorefile]\n";
+		print STDERR "Usage: $0 [-D domain] [-N address] [-w seconds] [-c seconds] [-S statusfile]\n";
 		return 1;
 	}
 
 	$domain		= $opt_D if defined($opt_D);
 	$nameserver	= $opt_N if defined($opt_N);
-	$semafile	= $opt_S if defined($opt_S);
+	$statusfile	= $opt_S if defined($opt_S);
 	$warn_diff	= $opt_w if defined($opt_w);
 	$crit_diff	= $opt_c if defined($opt_c);
 
@@ -117,7 +119,7 @@ B<check_nix> - Nagios/Icinga checker for freshness of ix.dnsbl.manitu.net DNSBL
 
 =head1 SYNOPSIS
 
-check_nix [-N I<address>] [-D I<domain>] [-w I<warn seconds>] [-c I<critical seconds>] [-S I<semaphore>]
+check_nix [-N I<address>] [-D I<domain>] [-w I<warn seconds>] [-c I<critical seconds>] [-S I<statusfile>]
 
 =head1 DESCRIPTION
 
@@ -163,7 +165,7 @@ Number of seconds difference between exiting with a WARNING code.
 
 Number of seconds difference between exiting with a CRITICAL code.
 
-=item I<-S> or I<--semaphore>
+=item I<-S> or I<--statusfile>
 
 Specify a file name (no default) into which B<check_nix> writes a verbose status code (i.e. C<"OK">, C"<WARNING>", ...) to indicate the status of the last check. An external process may monitor this file to do something clever, such as stop a process, lock a firewall, etc. Note that this file must be writable by the caller.
 
