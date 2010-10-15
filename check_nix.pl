@@ -6,7 +6,8 @@ use strict;
 use Net::DNS;
 use DateTime::Format::ISO8601;
 use Getopt::Long;
-use vars qw($opt_v $opt_w $opt_c $opt_N $opt_D $opt_S);
+use Pod::Usage;
+use vars qw($opt_v $opt_w $opt_c $opt_N $opt_D $opt_S $opt_h);
 
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3);
 my @ERRS = qw(OK WARNING CRITICAL UNKNOWN);
@@ -92,6 +93,7 @@ sub terminate {
 
 sub do_args(){
 	unless (GetOptions(
+		"h" => \$opt_h, "help" => \$opt_h,
 		"D:s" => \$opt_D, "domain:s" => \$opt_D,
 		"N:s" => \$opt_N, "nameserver:s" => \$opt_N,
 		"S:s" => \$opt_S, "statusfile:s" => \$opt_S,
@@ -101,6 +103,8 @@ sub do_args(){
 		print STDERR "Usage: $0 [-D domain] [-N address] [-w seconds] [-c seconds] [-S statusfile]\n";
 		return 1;
 	}
+
+	pod2usage(2) if ($opt_h);
 
 	$domain		= $opt_D if defined($opt_D);
 	$nameserver	= $opt_N if defined($opt_N);
