@@ -167,19 +167,25 @@ Number of seconds difference between exiting with a CRITICAL code.
 
 =item I<-S> or I<--statusfile>
 
-Specify a file name (no default) into which B<check_nix> writes a verbose status code (i.e. C<"OK">, C"<WARNING>", ...) to indicate the status of the last check. An external process may monitor this file to do something clever, such as stop a process, lock a firewall, etc. Note that this file must be writable by the caller.
+The file into which B<check_nix> writes a verbose status code (i.e. C<"OK">) when it runs. See below.
+
+=back
+
+=head1 STATUSFILE
+
+When B<check_nix> runs, you can specify the name of a file into which it writes a verbose status code (i.e. C<"OK">, C<"WARNING">, ...) to indicate the status of the last check. An external process may monitor this file to do something clever, such as stop a process, lock a firewall, etc. Note that this file must be writable by the caller.
 
 Example:
 
-	$ rm /tmp/myfile
-	$ check_nix -S /tmp/myfile
+	$ rm /tmp/nix.status
+	$ check_nix -S /tmp/nix.status
 	DNSBL last updated on slave [192.168.1.20]  0 days, 00:00:20 ago
-	$ cat /tmp/myfile
+	$ cat /tmp/nix.status
 	OK
 	$
 
+The reason this was implemented is that since a DNSBL can cause e-mail to be blocked, we believe it is better to have a name server B<not> answer than answer incorrectly. In other words, what you may wish to do is to have a process verify whether the DNSBL slave is running smoothly, and if it isn't kill off the name server until an operator has checked and fixed the problem.
 
-=back
 
 =head1 BUGS
 
