@@ -107,11 +107,11 @@ sub do_args(){
 		"w=i" => \$opt_w, "warning=i"  => \$opt_w,
 		"c=i" => \$opt_c, "critical=i" => \$opt_c,
 	)) {
-		print STDERR "Usage: $0 [-D domain] [-N address] [-w seconds] [-c seconds] [-S statusfile]\n";
+		pod2usage(1);
 		return 1;
 	}
 
-	pod2usage(2) if ($opt_h);
+	pod2usage(1) if ($opt_h);
 
 	$domain		= $opt_D if defined($opt_D);
 	$nameserver	= $opt_N if defined($opt_N);
@@ -124,98 +124,7 @@ sub do_args(){
 
 __END__
 
-=head1 NAME
-
-B<check_nix> - Nagios/Icinga checker for freshness of ix.dnsbl.manitu.net DNSBL
-
 =head1 SYNOPSIS
 
 check_nix [-N I<address>] [-D I<domain>] [-w I<warn seconds>] [-c I<critical seconds>] [-S I<statusfile>]
 
-=head1 DESCRIPTION
-
-The name B<check_nix> is a pun. The German word "nichts", meaning "nothing", is often
-pronounced as "nix", either by foreign speakers or jokingly. Does B<check_nix> check
-nothing? No, it doesn't. It checks the correct zone transfer of the I<Nix Spam> (i.e.
-"nothing spam" or "no spam") DNS black-list (or block-list) created by
-Bert Ungerer of the German I<ix> magazine. Information on the I<Nix Spam> DNSBL
-can be obtained at L<http://goo.gl/rOxd>.
-
-Since mid October 2010, the Nix Spam DNSBL carries a specific record in it
-denoting the ISO 8601 time of the server (i.e. of the master zone). This approximate
-time stamp can be used to determine how fresh a DNS slave of the zone is.
-
-During a zone transfer, the master's time stamp is transferred along to the zone's
-slave servers. Administrators on the slaves can now compare that time stamp to
-their own server time and thus determine if zone transfers are occurring in a 
-timely fashion.
-
-B<check_nix> does exactly that. It obtains the DNS TXT resource record (RR) from
-a slave server and compares that to the system time. If the difference is larger
-than I<warn seconds> or I<critical seconds>, B<check_nix> issues an appropriate
-diagnostic message and exits with a WARNING or CRITICAL code to inform the
-administrator's monitoring interface that something is wrong.
-
-=head2 Options
-
-=over 12
-
-=item I<-D> or I<--domain>
-
-Specify the domain for which to look up the TXT record in the DNS. Default is C<0.0.0.0.ix.dnsbl.manitu.net>.
-
-=item I<-N> or I<--nameserver>
-
-Specify which name server (IP or name) to use; default is C<127.0.0.1>.
-
-=item I<-w> or I<--warning>
-
-Number of seconds difference between exiting with a WARNING code.
-
-=item I<-c> or I<--critical>
-
-Number of seconds difference between exiting with a CRITICAL code.
-
-=item I<-S> or I<--statusfile>
-
-The file into which B<check_nix> writes a verbose status code (i.e. C<"OK">) when it runs. See below.
-
-=back
-
-=head1 STATUSFILE
-
-When B<check_nix> runs, you can specify the name of a file into which it writes a verbose status code (i.e. C<"OK">, C<"WARNING">, ...) to indicate the status of the last check. An external process may monitor this file to do something clever, such as stop a process, lock a firewall, etc. Note that this file must be writable by the caller.
-
-Example:
-
-	$ rm /tmp/nix.status
-	$ check_nix -S /tmp/nix.status
-	DNSBL last updated on slave [192.168.1.20]  0 days, 00:00:20 ago
-	$ cat /tmp/nix.status
-	OK
-	$
-
-The reason this was implemented is that since a DNSBL can cause e-mail to be blocked, we believe it is better to have a name server B<not> answer than answer incorrectly. In other words, what you may wish to do is to have a process verify whether the DNSBL slave is running smoothly, and if it isn't kill off the name server until an operator has checked and fixed the problem.
-
-
-=head1 BUGS
-
-Yes.
-
-If the clocks on the master and slave servers are askew in as much as the master's
-clock is further than the slave's, results are pretty 
-unpredictable; B<check_nix> will currently return an OK status.
-
-=head1 RETURN CODES
-
-B<check_nix> exits with a code 0, 1, or 2 indicating a status of OK, WARNING, or
-CRITICAL. A code of 3 (UNKNOWN) indicates a problem during the DNS lookup, and 
-the diagnostic message contains further information.
-
-=head1 AVAILABILITY
-
-L<http://github.com/jpmens/check_nix>
-
-=head1 AUTHOR
-
-Jan-Piet Mens L<http://mens.de>
