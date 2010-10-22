@@ -1,5 +1,121 @@
-# check_nix
+# NAME
 
-This is a Nagios/Icinga plugin for checking a particular DNS TXT RR. See the documentation in the program.
+check\_nix - Nagios/Icinga plugin to check freshness of NiX Spam
+DNSBL
 
-	perldoc check_nix.pl
+# SYNOPSIS
+
+check\_nix [-N *address*] [-D *domain*] [-w *warn seconds*] [-c
+*critical seconds*] [-S *statusfile*]
+
+# DESCRIPTION
+
+The name *check\_nix* is a pun. The German word "nichts", meaning
+"nothing", is often pronounced as "nix" by foreign speakers or
+jokingly. Does *check\_nix* check nothing? No, it doesn't. It
+checks the correct zone transfer of the *Nix Spam* (i.e. "nothing
+spam" or "no spam") DNS black-list (or block-list) created by Bert
+Ungerer of the German *ix* magazine. Information on the *Nix Spam*
+DNSBL can be obtained at <http://goo.gl/rOxd>.
+
+Mid October we requested, and hope to obtain, an approximate
+timestamp of when the DNSBL was last updated. This record is
+expected to be placed in the apex of the zone as an
+[RFC 1464](http://tools.ietf.org/html/rfc1464) string attribute
+containing an ISO 8601 timestamp:
+
+    ix.dnsbl.manitu.net. IN TXT "Heartbeat=2010-10-13T20:56:32+02:00"
+
+This approximate time stamp can be used to determine how fresh a
+DNS slave of the zone is.
+
+During a zone transfer, the master's time stamp is transferred
+along to the zone's slave servers. Administrators on the slaves can
+now compare that time stamp to their own server time and thus
+determine if zone transfers are occurring in a timely fashion.
+
+*check\_nix* does exactly that. It obtains the DNS TXT resource
+record (RR) from a slave server and compares that to the system
+time. If the difference is larger than *warn seconds* or
+*critical seconds*, *check\_nix* issues an appropriate diagnostic
+message and exits with a WARNING or CRITICAL code to inform the
+administrator's monitoring interface that something is wrong.
+
+# OPTIONS
+
+-D *domain*, --domain=*domain*
+:   Specify the domain for which to look up the TXT record in the
+    DNS. The default is `ix.dnsbl.manitu.net`.
+
+-N *nameserver*, --nameserver=*nameserver*
+:   Specify which name server (IP or name) to use; default is
+    `127.0.0.1`.
+
+-w *seconds*, --warning=*seconds*
+:   Number of seconds difference between exiting with a WARNING
+    code.
+
+-c *seconds*, --critical=*seconds*
+:   Number of seconds difference between exiting with a CRITICAL
+    code.
+
+-S *filename*, --statusfile=*filename*
+:   The file into which *check\_nix* writes a verbose status code
+    (i.e. `"OK"`) when it runs. See below.
+
+
+# STATUSFILE
+
+When *check\_nix* runs, you can specify the name of a file into
+which it writes a verbose status code (i.e. `"OK"`, `"WARNING"`,
+...) to indicate the status of the last check. An external process
+may monitor this file to do something clever, such as stop a
+process, lock a firewall, etc. Note that this file must be writable
+by the caller.
+
+Example:
+
+    $ rm /tmp/nix.status
+    $ check_nix -S /tmp/nix.status
+    DNSBL last updated on slave [192.168.1.20]  0 days, 00:00:20 ago
+    $ cat /tmp/nix.status
+    OK
+    $
+
+The reason this was implemented is that since a DNSBL can cause
+e-mail to be blocked, we believe it is better to have a name server
+*not* answer than answer incorrectly. In other words, what you may
+wish to do is to have a process verify whether the DNSBL slave is
+running smoothly, and if it isn't kill off the name server until an
+operator has checked and fixed the problem.
+
+# BUGS
+
+Yes.
+
+If the clocks on the master and slave servers are askew in as much
+as the master's clock is further than the slave's, results are
+pretty unpredictable; *check\_nix* will currently return an OK
+status.
+
+# RETURN CODES
+
+*check\_nix* exits with a code 0, 1, or 2 indicating a status of
+OK, WARNING, or CRITICAL. A code of 3 (UNKNOWN) indicates a problem
+during the DNS lookup, and the diagnostic message contains further
+information.
+
+# AVAILABILITY
+
+<http://github.com/jpmens/check_nix>
+
+# AUTHOR
+
+Jan-Piet Mens <http://mens.de>
+
+# SEE ALSO
+
+`resolver` (5).
+
+
+
