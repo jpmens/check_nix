@@ -19,6 +19,9 @@ case "$STATUS" in
 	CRITICAL)
 		echo "--- oh, oh!"
 		;;
+	UNKNOWN)
+		echo "--- somethin' unknown goin on here..."
+		;;
 	*)
 		echo "$0: don't grok content of $STATUSFILE";
 		exit 2;;

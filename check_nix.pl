@@ -15,7 +15,8 @@ my @ERRS = qw(OK WARNING CRITICAL UNKNOWN);
 my $warn_diff	= (10 * 60);
 my $crit_diff	= (30 * 60);
 my $nameserver	=  '127.0.0.1';
-my $domain	= '0.0.0.0.ix.dnsbl.manitu.net';
+my $domain	= 'ix.dnsbl.manitu.net';
+my $attribute	= 'heartbeat';
 my $statusfile	= undef;
 
 Getopt::Long::Configure('bundling');
@@ -73,7 +74,13 @@ sub TXT {
 	my $query = $res->query($domain, 'TXT');
 	if ($query) {
 		my @ans = map { $_ -> txtdata } (grep {$_->type eq 'TXT'} $query->answer);
-		$txtdata = @ans[0];
+		foreach my $a (@ans) {
+			if ($a =~ /^$attribute\s*=\s*(.*)/i) {
+				$txtdata = $1;
+				last;
+			}
+			$msg = "attribute $attribute not found in DNS";
+		}
 	} else {
 		$msg = "query for $domain TXT failed: " . $res->errorstring;
 	}
