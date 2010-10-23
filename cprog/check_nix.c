@@ -77,7 +77,7 @@ char *findattribute(const char *attribute, char *txtlist[])
         for (n = 0; txtlist[n]; n++) { 
                 rc = regexec(&preg, txtlist[n], nmatch, pmatch, 0); 
                 if (rc == 0) { 
-                        static char buf[1024]; 
+                        // static char buf[1024]; 
                         regmatch_t *pm = &pmatch[1]; 
 
 			ret = txtlist[n] + pm->rm_so;
@@ -136,6 +136,7 @@ int main()
 	char buf[128]; 
 	struct tm tm; 
 	time_t tics, now; 
+	void tics2comment(time_t old, time_t new, char *buf);
 
 	time(&now); 
 
@@ -158,7 +159,7 @@ int main()
 		exit(1);
 	}
 
-	printf("Gotit: %s\n", datestring);
+	// printf("Gotit: %s\n", datestring);
 
 	/* I have to "fix" the [+-]hh:mm of the time-zone modifier; we
 	 * are getting, say, +02:00, and I have to remove the colon
@@ -171,9 +172,24 @@ int main()
 	fixdate[strlen(fixdate) - 1] = 0;
 	iso8601_tm(fixdate, &tm, &tics); 
 
+	time_t diffsecs = now - tics;
+
+#if 0
 	printf("now  : %ld\n", now); 
 	printf("tics : %ld\n", tics); 
 	printf("diff : %ld\n", now - tics); 
+
+	{
+		struct tm *tmdiff;
+		time_t diffsecs = now - tics;
+
+		tmdiff = gmtime(&diffsecs);
+		printf("Elapsed: %d days, %02d:%02d:%02d\n",
+			tmdiff->tm_mday,
+			tmdiff->tm_hour,
+			tmdiff->tm_min,
+			tmdiff->tm_sec);
+	}
 
 	strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S %Z", &tm); 
 
@@ -181,6 +197,10 @@ int main()
 	printf("DNSfix: %s\n", fixdate); 
 	printf("new   : %s\n", buf); 
 	printf("ctime : %s", ctime(&tics)); 
+#endif
+
+	tics2comment(now, tics, buf);
+	printf("DNSBL last updated on slave [XXX] %ld seconds --  %s\n", diffsecs, buf);
 
 
 	for (n = 0; n < count; n++)
