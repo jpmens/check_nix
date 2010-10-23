@@ -7,43 +7,42 @@
 #include <netinet/in.h>
 #include <resolv.h>
 #include <regex.h> 
+#define _XOPEN_SOURCE /* glibc2 needs this */ 
+#include <time.h> 
+#include "getattributebyname.h"
+#include <getopt.h>
 
 
 #define PORT	53
 
-#define DOMAIN		"temp.aa"
+#define DOMAIN		"ix.dnsbl.manitu.net"
 #define ATTRIBUTE	"heartbeat"
 
-#define TXT_RR	16
+#define NDECL(X) #X 
 
-/*
- * Collect at most `ntxt` TXT RR into `txtlist[]`, and
- * return the count.
- */
+#define OK              (0) 
+#define WARNING         (1) 
+#define CRITICAL        (2) 
+#define UNKNOWN         (3) 
 
-int txt_rrs(char *txtlist[], int ntxt)
+static char *nagerr[] = { NDECL(OK), NDECL(WARNING), NDECL(CRITICAL), NDECL(UNKNOWN), NULL }; 
+static char *statusfile = NULL;
+
+#define nagcode_to_string(x) ( (x) <= (UNKNOWN) ? nagerr[(x)] : "NULL" ) 
+
+void terminate(int code, char *reason)
 {
-	struct dns_reply *r;
-	struct resource_record *rr;
-	int n = 0;
+	FILE *fp;
 
-	if ((r = dns_lookup(DOMAIN, "TXT")) == NULL) {
-		return (-1);
+	if (statusfile && ((fp = fopen(statusfile, "w")) != NULL)) {
+		fprintf(fp, "%s\n", nagcode_to_string(code));
+		fclose(fp);
 	}
-
-	for (rr = r->head; rr; rr = rr->next) {
-		if (rr->type == TXT_RR) {
-			txtlist[n++] = strdup(rr->u.txt);
-			txtlist[n] = NULL;
-			if (n >= (ntxt-1)) {
-				break;
-			}
-		}
-	}
-
-	dns_free_data(r);
-	return (n);
+	printf("DNSBL %s\n", reason);
+	exit(code);
 }
+
+#define TXT_RR	16
 
 void setnameserver(const char *addr)
 {
@@ -59,43 +58,6 @@ void setnameserver(const char *addr)
 	_res.nsaddr_list[0] = ns[0];
 }
 
-char *findattribute(const char *attribute, char *txtlist[])
-{
-	regex_t preg; 
-	int n, rc;
-	size_t nmatch = 3; 
-	regmatch_t pmatch[3]; 
-	static char re[BUFSIZ], *ret = NULL;
-
-	sprintf(re, "%s\\s*=\\s*(.*)", attribute);
-
-        if ((rc = regcomp(&preg, re, REG_EXTENDED|REG_ICASE)) != 0) { 
-                regerror(rc, &preg, re, sizeof(re)); 
-                return (re);
-        } 
-
-        for (n = 0; txtlist[n]; n++) { 
-                rc = regexec(&preg, txtlist[n], nmatch, pmatch, 0); 
-                if (rc == 0) { 
-                        // static char buf[1024]; 
-                        regmatch_t *pm = &pmatch[1]; 
-
-			ret = txtlist[n] + pm->rm_so;
-
-                        // memcpy(buf, txtlist[n] + pm->rm_so, pm->rm_eo - pm->rm_so); 
-                        // printf("\t-> MATCH (%d, %d) [%s]\n", 
-                        //         (int)pm->rm_so, (int)pm->rm_eo, buf); 
-                } else { 
-                        // printf("\t%d\n", rc); 
-                } 
-        } 
-
-        regfree(&preg); 
-	return (ret);
-}
-
-#define _XOPEN_SOURCE /* glibc2 needs this */ 
-#include <time.h> 
 
 #define TRUE 1 
 #define FALSE 0 
@@ -125,41 +87,54 @@ int iso8601_tm(const char *tstring, struct tm *tm, time_t *tics)
         return (TRUE); 
 } 
 
-
-#define MAX_RRS		20
-
-int main()
+int main(int argc, char **argv)
 {
-	char *txtlist[MAX_RRS];
-	int count, n;
-	char *datestring, fixdate[48];
+	int rc, c;
+	char datestring[BUFSIZ], fixdate[48], msg[BUFSIZ];
 	char buf[128]; 
 	struct tm tm; 
 	time_t tics, now; 
 	void tics2comment(time_t old, time_t new, char *buf);
+	char *domain = DOMAIN;
+	char *ns = "127.0.0.1";
+	time_t warn = 10 * 60;
+	time_t crit = 30 * 60;
+
+	while ((c = getopt(argc, argv, "N:D:w:c:S:")) != EOF) {
+		switch (c) {
+			case 'N':
+				ns = strdup(optarg);
+				break;
+			case 'D':
+				domain = strdup(optarg);
+				break;
+			case 'S':
+				statusfile = strdup(optarg);
+				break;
+			case 'w':
+				warn = atol(optarg);
+				break;
+			case 'c':
+				crit = atol(optarg);
+				break;
+			default:
+				puts("USAGE");
+				exit(2);
+		}
+	}
+
 
 	time(&now); 
 
+	// FIXME:
+	//	disable resolv.conf expansion
+	setnameserver(ns);
 
-	setnameserver("127.0.0.1");
-
-
-	count = txt_rrs(txtlist, MAX_RRS - 1);
-
-	/*
-	printf("count == %d\n", count);
-	for (n = 0; n < count; n++) {
-		printf("[%s]\n", txtlist[n]);
+	rc = getattributebyname(domain, ATTRIBUTE, datestring, sizeof(datestring));
+	if (rc == 0) {
+		sprintf(msg, "Can't find %s attribute in %s", ATTRIBUTE, domain);
+		terminate(UNKNOWN, msg);
 	}
-	*/
-
-	datestring = findattribute(ATTRIBUTE, txtlist);
-	if (datestring == NULL) {
-		printf("Can't find requested attribute\n");
-		exit(1);
-	}
-
-	// printf("Gotit: %s\n", datestring);
 
 	/* I have to "fix" the [+-]hh:mm of the time-zone modifier; we
 	 * are getting, say, +02:00, and I have to remove the colon
@@ -174,36 +149,16 @@ int main()
 
 	time_t diffsecs = now - tics;
 
-#if 0
-	printf("now  : %ld\n", now); 
-	printf("tics : %ld\n", tics); 
-	printf("diff : %ld\n", now - tics); 
-
-	{
-		struct tm *tmdiff;
-		time_t diffsecs = now - tics;
-
-		tmdiff = gmtime(&diffsecs);
-		printf("Elapsed: %d days, %02d:%02d:%02d\n",
-			tmdiff->tm_mday,
-			tmdiff->tm_hour,
-			tmdiff->tm_min,
-			tmdiff->tm_sec);
-	}
-
-	strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S %Z", &tm); 
-
-	printf("DNS   : %s\n", datestring); 
-	printf("DNSfix: %s\n", fixdate); 
-	printf("new   : %s\n", buf); 
-	printf("ctime : %s", ctime(&tics)); 
-#endif
-
 	tics2comment(now, tics, buf);
-	printf("DNSBL last updated on slave [XXX] %ld seconds --  %s\n", diffsecs, buf);
+	sprintf(msg, "last updated on slave [%s] %ld seconds --  %s",
+			ns, diffsecs, buf);
 
+	if (diffsecs > crit)
+		terminate(CRITICAL, msg);
+	else if (diffsecs > warn)
+		terminate(WARNING, msg);
 
-	for (n = 0; n < count; n++)
-		free(txtlist[n]);
-	return (0);
+	terminate (OK, msg);
+	/*notreached*/
+	return 0;
 }
