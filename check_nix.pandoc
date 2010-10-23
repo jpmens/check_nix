@@ -49,10 +49,12 @@ administrator's monitoring interface that something is wrong.
 :    Specify which name server (IP or name) to use; default is `127.0.0.1`.
 
 -w *seconds*, \--warning=*seconds*
-:    Number of seconds difference between exiting with a WARNING code.
+:    Number of seconds difference between exiting with a WARNING code; defaults
+     to 600 seconds (10 minutes).
 
 -c *seconds*, \--critical=*seconds*
-:    Number of seconds difference between exiting with a CRITICAL code.
+:    Number of seconds difference between exiting with a CRITICAL code; defaults
+     to 1800 seconds (30 minutes).
 
 -S *filename*, \--statusfile=*filename*
 :    The file into which *check_nix* writes a verbose status code (i.e. `"OK"`) when it runs. See below.

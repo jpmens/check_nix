@@ -53,11 +53,11 @@ administrator's monitoring interface that something is wrong.
 
 -w *seconds*, --warning=*seconds*
 :   Number of seconds difference between exiting with a WARNING
-    code.
+    code; defaults to 600 seconds (10 minutes).
 
 -c *seconds*, --critical=*seconds*
 :   Number of seconds difference between exiting with a CRITICAL
-    code.
+    code; defaults to 1800 seconds (30 minutes).
 
 -S *filename*, --statusfile=*filename*
 :   The file into which *check\_nix* writes a verbose status code

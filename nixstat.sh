@@ -9,6 +9,7 @@ STATUSFILE=/tmp/nix.stat
 
 STATUS="`head -1 $STATUSFILE`"
 
+/bin/echo -n "Statusfile contains: $STATUS: "
 case "$STATUS" in
 	OK)
 		echo "--- all ok"
