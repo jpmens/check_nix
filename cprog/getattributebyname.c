@@ -18,7 +18,8 @@
  * This is a (half hearted) implementation of RFC 1464. `domain' is
  * the DNS domain to search for TXT resource records. `attribute'
  * is the name of the desired attribute, whose value will be copied
- * into at most `abuflen' characters of `abuf'.
+ * into at most `abuflen' characters of `abuf'. (`abuf' will be
+ * null-terminated.)
  *
  * This implementation doesn't account for all the quoting magic
  * defined in RFC 1464. In particular, no unquoting is performed.
@@ -61,6 +62,7 @@ getattributebyname(char *domain, char *attribute, char *abuf, int abuflen)
 	                        regmatch_t *pm = &pmatch[1]; 
 	
 				strncpy(abuf, rr->u.txt + pm->rm_so, abuflen);
+				abuf[abuflen - 1] = 0;
 				ret = 1;
 				break;
 	                } 

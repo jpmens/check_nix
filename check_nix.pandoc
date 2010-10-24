@@ -43,7 +43,7 @@ administrator's monitoring interface that something is wrong.
 
 -D *domain*, \--domain=*domain*
 :   Specify the domain for which to look up the TXT record in the DNS.
-    The default is `ix.dnsbl.manitu.net`.
+    The default is `ix.dnsbl.manitu.net.`.
 
 -N *nameserver*, \--nameserver=*nameserver*
 :    Specify which name server (IP or name) to use; default is `127.0.0.1`.

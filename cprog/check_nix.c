@@ -26,10 +26,11 @@
 #define CRITICAL        (2) 
 #define UNKNOWN         (3) 
 
-static char *nagerr[] = { NDECL(OK), NDECL(WARNING), NDECL(CRITICAL), NDECL(UNKNOWN), NULL }; 
+#define DIM(x)	( sizeof(x) / sizeof(x[0]) )
+static char *nagerr[] = { NDECL(OK), NDECL(WARNING), NDECL(CRITICAL), NDECL(UNKNOWN) };
 static char *statusfile = NULL;
 
-#define nagcode_to_string(x) ( (x) <= (UNKNOWN) ? nagerr[(x)] : "NULL" ) 
+#define nagcode_to_string(x) ( (x) <= DIM(nagerr) ? nagerr[(x)] : "NULL" ) 
 
 void terminate(int code, char *reason)
 {
@@ -43,11 +44,6 @@ void terminate(int code, char *reason)
 	exit(code);
 }
 
-#define TXT_RR	16
-
-#define TRUE 1 
-#define FALSE 0 
-
 /* 
  * Convert an ISO 8601 timestamp of the form 
  * "2010-10-13T20:56:32+0200" (note there is no colon
@@ -57,27 +53,22 @@ void terminate(int code, char *reason)
 
 int iso8601_tm(const char *tstring, struct tm *tm, time_t *tics) 
 { 
-        // FIXME 
-	// tzset(); 
-	// tzsetwall(); 
-
         memset(tm, 0, sizeof(struct tm)); 
         strptime(tstring, "%FT%T%z", tm); 
 
         *tics = mktime(tm);
         if (*tics == (time_t)-1) 
-                return (FALSE); 
+                return (0); 
 
         localtime_r(tics, tm); 
 
-        return (TRUE); 
+        return (1); 
 } 
 
 int main(int argc, char **argv)
 {
 	int rc, c;
-	char datestring[BUFSIZ], fixdate[48], msg[BUFSIZ];
-	char buf[128]; 
+	char datestring[BUFSIZ], fixdate[48], msg[BUFSIZ], buf[BUFSIZ];
 	struct tm tm; 
 	time_t tics, now; 
 	void tics2comment(time_t old, time_t new, char *buf);
@@ -109,11 +100,6 @@ int main(int argc, char **argv)
 		}
 	}
 
-
-	time(&now); 
-
-	// FIXME:
-	//	disable resolv.conf expansion
 	setnameserver(ns);
 
 	rc = getattributebyname(domain, ATTRIBUTE, datestring, sizeof(datestring));
@@ -133,6 +119,7 @@ int main(int argc, char **argv)
 	fixdate[strlen(fixdate) - 1] = 0;
 	iso8601_tm(fixdate, &tm, &tics); 
 
+	time(&now); 
 	time_t diffsecs = now - tics;
 
 	tics2comment(now, tics, buf);
