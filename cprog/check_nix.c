@@ -15,7 +15,7 @@
 
 #define PORT	53
 
-#define DOMAIN		"ix.dnsbl.manitu.net"
+#define DOMAIN		"ix.dnsbl.manitu.net."
 #define ATTRIBUTE	"heartbeat"
 
 #define NDECL(X) #X 
@@ -150,7 +150,7 @@ int main(int argc, char **argv)
 	time_t diffsecs = now - tics;
 
 	tics2comment(now, tics, buf);
-	sprintf(msg, "last updated on slave [%s] %ld seconds --  %s",
+	sprintf(msg, "last updated on slave [%s] %ld seconds (%s) ago",
 			ns, diffsecs, buf);
 
 	if (diffsecs > crit)
