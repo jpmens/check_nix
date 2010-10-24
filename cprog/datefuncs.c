@@ -53,7 +53,7 @@ void tics2comment(time_t old, time_t new, char *buf)
 
 	frac_to_hms(frac, &hour, &min, &sec);
 
-	sprintf(buf, "%d days, %02d:%02d:%02d ago",
+	sprintf(buf, "%d days, %02d:%02d:%02d",
 		(int) from_epoch("day", difference),
 		hour, min, sec);
 }
