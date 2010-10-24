@@ -109,6 +109,13 @@ information.
 
 <http://github.com/jpmens/check_nix>
 
+# CREDITS
+
+-   This product includes software developed by the Kungliga
+    Tekniska Hvgskolan and its contributors.
+-   This program contains date functions shamelessly swiped from
+    <http://pleac.sourceforge.net/pleac_cposix/datesandtimes.html>
+
 # AUTHOR
 
 Jan-Piet Mens <http://mens.de>
