@@ -11,6 +11,7 @@
 #include <time.h> 
 #include "getattributebyname.h"
 #include <getopt.h>
+#include "ns.h"
 
 
 #define PORT	53
@@ -43,21 +44,6 @@ void terminate(int code, char *reason)
 }
 
 #define TXT_RR	16
-
-void setnameserver(const char *addr)
-{
-	struct sockaddr_in ns[1];
-
-	res_init();
-
-	ns[0].sin_addr.s_addr = inet_addr(addr);
-	ns[0].sin_family = AF_INET;
-	ns[0].sin_port = htons(PORT);
-	ns[0].sin_len = sizeof(struct sockaddr_in);
-
-	_res.nsaddr_list[0] = ns[0];
-}
-
 
 #define TRUE 1 
 #define FALSE 0 

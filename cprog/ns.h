@@ -1,0 +1,1 @@
+void setnameserver(char *server);
