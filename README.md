@@ -10,29 +10,31 @@ check\_nix [-N *address*] [-D *domain*] [-w *warn seconds*] [-c
 
 # DESCRIPTION
 
-The name *check\_nix* is a pun. The German word "nichts", meaning
-"nothing", is often pronounced as "nix" by foreign speakers or
-jokingly. Does *check\_nix* check nothing? No, it doesn't. It
-checks the correct zone transfer of the *Nix Spam* (i.e. "nothing
-spam" or "no spam") DNS black-list (or block-list) created by Bert
-Ungerer of the German *ix* magazine. Information on the *Nix Spam*
-DNSBL can be obtained at <http://goo.gl/rOxd>.
+(The German word "nichts", meaning "nothing", is often pronounced
+as "nix" by non-native speakers.)
 
-Mid October we requested, and hope to obtain, an approximate
-timestamp of when the DNSBL was last updated. This record is
-expected to be placed in the apex of the zone as an
+*Nix Spam* (i.e. "nothing spam" or "no spam") DNS black-list (or
+block-list) created by Bert Ungerer of the German *ix* magazine.
+Information on the *Nix Spam* DNSBL can be obtained at
+<http://goo.gl/rOxd>. Mid October 2010 we requested, and graciously
+got, a DNS TXT resource record as an
 [RFC 1464](http://tools.ietf.org/html/rfc1464) string attribute
-containing an ISO 8601 timestamp:
+inserted into the zone apex. This TXT RR contains a "heartbeat" ISO
+8601 timestamp which indicates the *approximate* time when the list
+was last updated:
 
-    ix.dnsbl.manitu.net. IN TXT "Heartbeat=2010-10-13T20:56:32+02:00"
+    60 IN TXT "heartbeat=2010-10-25T15:46:01+02:00"
 
-This approximate time stamp can be used to determine how fresh a
-DNS slave of the zone is.
+We requested this timestamp so that zone slave servers can check
+whether they are still approximately up to date with their zone
+transfers; the DNSBL is update several times per second.
 
-During a zone transfer, the master's time stamp is transferred
-along to the zone's slave servers. Administrators on the slaves can
-now compare that time stamp to their own server time and thus
-determine if zone transfers are occurring in a timely fashion.
+*check\_nix* is a Nagios/Icinga plugin which queries the timestamp
+to check the freshness of a *Nix Spam* slave. During a zone
+transfer, the master's time stamp is transferred along to the
+zone's slave servers. Administrators on the slaves can now compare
+that time stamp to their own server time and thus determine if zone
+transfers are occurring in a timely fashion.
 
 *check\_nix* does exactly that. It obtains the DNS TXT resource
 record (RR) from a slave server and compares that to the system
@@ -45,7 +47,7 @@ administrator's monitoring interface that something is wrong.
 
 -D *domain*, --domain=*domain*
 :   Specify the domain for which to look up the TXT record in the
-    DNS. The default is `ix.dnsbl.manitu.net`.
+    DNS. The default is `ix.dnsbl.manitu.net.`.
 
 -N *nameserver*, --nameserver=*nameserver*
 :   Specify which name server (IP or name) to use; default is
@@ -122,7 +124,7 @@ Jan-Piet Mens <http://mens.de>
 
 # SEE ALSO
 
-`resolver` (5).
+`resolver`(5).
 
 
 
