@@ -27,7 +27,8 @@ was last updated:
 
 We requested this timestamp so that zone slave servers can check
 whether they are still approximately up to date with their zone
-transfers; the DNSBL is update several times per second.
+transfers; the DNSBL is updated several times per second and the
+SOA serial number has no relationship to time.
 
 *check\_nix* is a Nagios/Icinga plugin which queries the timestamp
 to check the freshness of a *Nix Spam* slave. During a zone
@@ -63,7 +64,9 @@ administrator's monitoring interface that something is wrong.
 
 -S *filename*, --statusfile=*filename*
 :   The file into which *check\_nix* writes a verbose status code
-    (i.e. `"OK"`) when it runs. See below.
+    (i.e. `"OK"`) when it runs. See below. This file must be writeable
+    by the *check\_nix* process; if it cannot create or open the file
+    for writing, errors are silently ignored.
 
 
 # STATUSFILE

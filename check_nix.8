@@ -29,7 +29,8 @@ when the list was last updated:
 .PP
 We requested this timestamp so that zone slave servers can check
 whether they are still approximately up to date with their zone
-transfers; the DNSBL is update several times per second\.
+transfers; the DNSBL is updated several times per second and the
+SOA serial number has no relationship to time\.
 .PP
 \f[I]check_nix\f[] is a Nagios/Icinga plugin which queries the
 timestamp to check the freshness of a \f[I]Nix Spam\f[] slave\.
@@ -74,7 +75,9 @@ defaults to 1800 seconds (30 minutes)\.
 .TP
 .B -S \f[I]filename\f[], --statusfile=\f[I]filename\f[]
 The file into which \f[I]check_nix\f[] writes a verbose status code
-(i\.e\. \f[B]"OK"\f[]) when it runs\. See below\.
+(i\.e\. \f[B]"OK"\f[]) when it runs\. See below\. This file must be
+writeable by the \f[I]check_nix\f[] process; if it cannot create or
+open the file for writing, errors are silently ignored\.
 .RS
 .RE
 .SH STATUSFILE

@@ -27,7 +27,8 @@ indicates the _approximate_ time when the list was last updated:
 
 We requested this timestamp so that zone slave servers can check whether they
 are still approximately up to date with their zone transfers; the DNSBL is
-update several times per second.
+updated several times per second and the SOA serial number has no relationship
+to time.
 
 *check_nix* is a Nagios/Icinga plugin which queries the timestamp to check the
 freshness of a _Nix Spam_ slave.  During a zone transfer, the master's time
@@ -59,7 +60,7 @@ inform the administrator's monitoring interface that something is wrong.
      to 1800 seconds (30 minutes).
 
 -S *filename*, \--statusfile=*filename*
-:    The file into which *check_nix* writes a verbose status code (i.e. `"OK"`) when it runs. See below.
+:    The file into which *check_nix* writes a verbose status code (i.e. `"OK"`) when it runs. See below. This file must be writeable by the *check_nix* process; if it cannot create or open the file for writing, errors are silently ignored.
 
 # STATUSFILE
 
