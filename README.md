@@ -28,7 +28,10 @@ was last updated:
 We requested this timestamp so that zone slave servers can check
 whether they are still approximately up to date with their zone
 transfers; the DNSBL is updated several times per second and the
-SOA serial number has no relationship to time.
+SOA serial number has no relationship to time. Note once again,
+that the heartbeat reflects the *approximate* and not the exact
+time of the last zone update (i.e. the heartbeat is updated once a
+minute).
 
 *check\_nix* is a Nagios/Icinga plugin which queries the timestamp
 to check the freshness of a *Nix Spam* slave. During a zone
