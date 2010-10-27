@@ -13,7 +13,7 @@ check_nix [-N \f[I]address\f[]] [-D \f[I]domain\f[]] [-w
 (The German word "nichts", meaning "nothing", is often pronounced
 as "nix" by non-native speakers\.)
 .PP
-\f[I]Nix Spam\f[] (i\.e\. "nothing spam" or "no spam") DNS
+\f[I]NiX Spam\f[] (i\.e\. "nothing spam" or "no spam") DNS
 black-list (or block-list) created by Bert Ungerer of the German
 \f[I]ix\f[] magazine\. Information on the \f[I]Nix Spam\f[] DNSBL
 can be obtained at <http://goo.gl/rOxd>\. Mid October 2010 we
@@ -51,6 +51,9 @@ system time\. If the difference is larger than
 exits with a WARNING or CRITICAL code to inform the
 administrator\[aq]s monitoring interface that something is wrong\.
 .SH OPTIONS
+.PP
+\f[I]check_nix\f[] understands the following options\. (The C
+version currently supports the short options only\.)
 .TP
 .B -D \f[I]domain\f[], --domain=\f[I]domain\f[]
 Specify the domain for which to look up the TXT record in the DNS\.
@@ -83,6 +86,11 @@ writeable by the \f[I]check_nix\f[] process; if it cannot create or
 open the file for writing, errors are silently ignored\.
 .RS
 .RE
+.TP
+.B -d, --debug
+C version only: enable debugging; not generally useful\.
+.RS
+.RE
 .SH STATUSFILE
 .PP
 When \f[I]check_nix\f[] runs, you can specify the name of a file
@@ -106,9 +114,10 @@ Example:
 The reason this was implemented is that since a DNSBL can cause
 e-mail to be blocked, we believe it is better to have a name server
 \f[I]not\f[] answer than answer incorrectly\. In other words, what
-you may wish to do is to have a process verify whether the DNSBL
-slave is running smoothly, and if it isn\[aq]t kill off the name
-server until an operator has checked and fixed the problem\.
+you may wish to do is to have an external process periodically
+verify whether the DNSBL slave is running smoothly, and if it
+isn\[aq]t kill off the name server until an operator has checked
+and fixed the problem\.
 .SH BUGS
 .PP
 Yes\.
@@ -117,6 +126,12 @@ If the clocks on the master and slave servers are askew in as much
 as the master\[aq]s clock is further than the slave\[aq]s, results
 are pretty unpredictable; \f[I]check_nix\f[] will currently return
 an OK status\.
+.PP
+We know of at least one platform on which \f[B]getaddrinfo\f[](3)
+behaves incorrectly with a loopback address (\f[B]127\.0\.0\.1\f[])
+and a running \f[B]nscd\f[](8): if you experience difficulties
+using \f[B]check_nix\ -N\ 127\.0\.0\.1\f[] (the default), either
+disable the latter or use \f[B]localhost\f[]\.
 .SH RETURN CODES
 .PP
 \f[I]check_nix\f[] exits with a code 0, 1, or 2 indicating a status
@@ -128,10 +143,11 @@ further information\.
 <http://github.com/jpmens/check_nix>
 .SH CREDITS
 .IP \[bu] 2
-This product includes software developed by the Kungliga Tekniska
-Hvgskolan and its contributors\.
+The C version of this product includes software developed by the
+Kungliga Tekniska Hvgskolan and its contributors\.
 .IP \[bu] 2
-This program contains date functions shamelessly swiped from
+The C version of this program contains date functions shamelessly
+swiped from
 <http://pleac.sourceforge.net/pleac_cposix/datesandtimes.html>
 .SH AUTHOR
 .PP

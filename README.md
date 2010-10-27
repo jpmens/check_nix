@@ -13,7 +13,7 @@ check\_nix [-N *address*] [-D *domain*] [-w *warn seconds*] [-c
 (The German word "nichts", meaning "nothing", is often pronounced
 as "nix" by non-native speakers.)
 
-*Nix Spam* (i.e. "nothing spam" or "no spam") DNS black-list (or
+*NiX Spam* (i.e. "nothing spam" or "no spam") DNS black-list (or
 block-list) created by Bert Ungerer of the German *ix* magazine.
 Information on the *Nix Spam* DNSBL can be obtained at
 <http://goo.gl/rOxd>. Mid October 2010 we requested, and graciously
@@ -49,6 +49,9 @@ administrator's monitoring interface that something is wrong.
 
 # OPTIONS
 
+*check\_nix* understands the following options. (The C version
+currently supports the short options only.)
+
 -D *domain*, --domain=*domain*
 :   Specify the domain for which to look up the TXT record in the
     DNS. The default is `ix.dnsbl.manitu.net.`.
@@ -70,6 +73,8 @@ administrator's monitoring interface that something is wrong.
     (i.e. `"OK"`) when it runs. See below. This file must be writeable
     by the *check\_nix* process; if it cannot create or open the file
     for writing, errors are silently ignored.
+-d, --debug
+:   C version only: enable debugging; not generally useful.
 
 
 # STATUSFILE
@@ -93,9 +98,10 @@ Example:
 The reason this was implemented is that since a DNSBL can cause
 e-mail to be blocked, we believe it is better to have a name server
 *not* answer than answer incorrectly. In other words, what you may
-wish to do is to have a process verify whether the DNSBL slave is
-running smoothly, and if it isn't kill off the name server until an
-operator has checked and fixed the problem.
+wish to do is to have an external process periodically verify
+whether the DNSBL slave is running smoothly, and if it isn't kill
+off the name server until an operator has checked and fixed the
+problem.
 
 # BUGS
 
@@ -105,6 +111,12 @@ If the clocks on the master and slave servers are askew in as much
 as the master's clock is further than the slave's, results are
 pretty unpredictable; *check\_nix* will currently return an OK
 status.
+
+We know of at least one platform on which `getaddrinfo`(3) behaves
+incorrectly with a loopback address (`127.0.0.1`) and a running
+`nscd`(8): if you experience difficulties using
+`check_nix -N 127.0.0.1` (the default), either disable the latter
+or use `localhost`.
 
 # RETURN CODES
 
@@ -119,9 +131,10 @@ information.
 
 # CREDITS
 
--   This product includes software developed by the Kungliga
-    Tekniska Hvgskolan and its contributors.
--   This program contains date functions shamelessly swiped from
+-   The C version of this product includes software developed by
+    the Kungliga Tekniska Hvgskolan and its contributors.
+-   The C version of this program contains date functions
+    shamelessly swiped from
     <http://pleac.sourceforge.net/pleac_cposix/datesandtimes.html>
 
 # AUTHOR
