@@ -16,67 +16,98 @@
 #include <resolv.h>
 #include "ns.h"
 
-#define NAMESERVER_PORT	53
+int setnameserver(char *srv, int debug) 
+{ 
+	struct addrinfo *ans, *r, hint; 
+	int s; 
+	void *addr; 
+	char *ipver, ipstr[INET6_ADDRSTRLEN]; 
+	struct sockaddr_in ns_list[MAXNS]; 
+	int nscount = 0, n; 
 
-void setnameserver(char *srv)
-{
-	short port = htons(NAMESERVER_PORT);
-	struct __res_state res_t, res;
-	int nscount = 0;
-	union res_sockaddr_union u[MAXNS];
-	struct addrinfo *answer = NULL, *cur = NULL, hint;
+	memset(&hint, 0, sizeof (struct addrinfo)); 
+	hint.ai_family = AF_INET; 
+	// hint.ai_family = AF_UNSPEC; 
+	hint.ai_socktype = SOCK_DGRAM; 
 
-	res_ninit(&res);
-	res_t = res;
-
-	memset(u, 0, sizeof(u));
-	res.pfcode = 0;
-	res.options = RES_DEFAULT;
-	memset(&hint, 0, sizeof(hint));
-	hint.ai_socktype = SOCK_DGRAM;
-
-	/* Need default resolver info for getaddrinfo() to find names */
-	if (!getaddrinfo(srv, NULL, &hint, &answer)) {
-		res = res_t;
-		cur = answer;
-		for (cur = answer; cur != NULL; cur = cur->ai_next) {
-			if (nscount == MAXNS)
-				break;
-			switch (cur->ai_addr->sa_family) {
-				case AF_INET6:
-					u[nscount].sin6 = *(struct sockaddr_in6*)cur->ai_addr;
-					u[nscount++].sin6.sin6_port = port;
-					break;
-				case AF_INET:
-					u[nscount].sin = *(struct sockaddr_in*)cur->ai_addr;
-					u[nscount++].sin.sin_port = port;
-				break;
-			}
-		}
-		if (nscount != 0)
-			res_setservers(&res, u, nscount);
-		freeaddrinfo(answer);
-	} else {
-		res = res_t;
-		fprintf(stderr, "Bad server: %s\n", srv);
+	if (debug) {
+		fprintf(stderr, "Find address for srv == %s\n", srv);
 	}
 
-	/* Set up resolver to use our name server on subsequent queries */
-	_res = res;
+	res_init(); 
+
+	/* 
+	 * Don't mess with resolver config as yet -- getaddrinfo() 
+	 * needs default resolver to lookup names. 
+	 */ 
+
+	if ((s = getaddrinfo(srv, "domain", &hint, &ans)) != 0) { 
+		fprintf(stderr, "Can't get address info for %s: %s\n", 
+			srv, gai_strerror(s)); 
+		return (0);
+	} 
+
+	for (r = ans; r && (nscount < MAXNS); r = r->ai_next) { 
+#if 0 
+		char host[NI_MAXHOST], service[NI_MAXSERV]; 
+		s = getnameinfo(r->ai_addr, r->ai_addrlen, 
+				host, NI_MAXHOST, service, NI_MAXSERV, NI_NUMERICSERV); 
+		if (s == 0) { 
+			fprintf(stderr, "\thost %s:%s\n", host, service); 
+		} else { 
+			fprintf(stderr, "getnameinfo: %s\n", gai_strerror(s)); 
+		} 
+#endif 
+		if (r->ai_family == AF_INET) { 
+			struct sockaddr_in *ipv4 = (struct sockaddr_in *)r->ai_addr; 
+			struct sockaddr_in *nsp = &ns_list[nscount]; 
+
+			addr = &(ipv4->sin_addr); 
+			ipver = "IPv4"; 
+
+			memset(nsp, 0, sizeof(struct sockaddr_in)); 
+
+			nsp->sin_addr.s_addr    = ipv4->sin_addr.s_addr; 
+			nsp->sin_port	   = ipv4->sin_port; 
+			nsp->sin_family	 = ipv4->sin_family; 
+
+			nscount++; 
+
+		} else if (r->ai_family == AF_INET6) { 
+			struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)r->ai_addr; 
+
+			addr = &(ipv6->sin6_addr); 
+			ipver = "IPv4"; 
+
+			fprintf(stderr, "IPv6 addresses unsupported\n"); 
+			// FIXME 
+		} 
+
+		if (debug) {
+			inet_ntop(r->ai_family, addr, ipstr, sizeof ipstr); 
+			fprintf(stderr, "  %s: %s\n", ipver, ipstr); 
+		}
+
+	} 
+	freeaddrinfo(ans); 
+
+	if (nscount > 0)  {
+
+		/* 
+		 * We have a "copy" of required name server addresses in 
+		 * ns_list[]; copy that into _res and set counter. 
+		 */ 
+
+		for (n = 0; n < nscount; n++) { 
+			_res.nsaddr_list[n] = ns_list[n]; 
+		} 
+		_res.nscount = nscount; 
+
+		_res.options &= ~RES_RECURSE; 
+		_res.options |= RES_INIT; 
+		// _res.options |= RES_DEBUG; 
+		_res.options &= ~(RES_DNSRCH | RES_DEFNAMES); 
+	}
+	
+	return (nscount);
 }
-
-#ifdef HISTORIC_OLD_STUFF_OF_MINE
-void setnameserver(const char *addr)
-{
-	struct sockaddr_in ns[1];
-
-	res_init();
-
-	ns[0].sin_addr.s_addr = inet_addr(addr);
-	ns[0].sin_family = AF_INET;
-	ns[0].sin_port = htons(PORT);
-	ns[0].sin_len = sizeof(struct sockaddr_in);
-
-	_res.nsaddr_list[0] = ns[0];
-}
-#endif

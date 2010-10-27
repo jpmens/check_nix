@@ -1,1 +1,1 @@
-void setnameserver(char *server);
+int setnameserver(char *server, int debug);
