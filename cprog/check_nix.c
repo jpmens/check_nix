@@ -30,6 +30,8 @@
 static char *nagerr[] = { NDECL(OK), NDECL(WARNING), NDECL(CRITICAL), NDECL(UNKNOWN) };
 static char *statusfile = NULL;
 
+int debug = 0;
+
 #define nagcode_to_string(x) ( (x) <= DIM(nagerr) ? nagerr[(x)] : "NULL" ) 
 
 void terminate(int code, char *reason)
@@ -56,11 +58,13 @@ int iso8601_tm(const char *tstring, struct tm *tm, time_t *tics)
         memset(tm, 0, sizeof(struct tm)); 
         strptime(tstring, "%FT%T%z", tm); 
 
+	tm->tm_isdst = -1;	// FIXME?
+
         *tics = mktime(tm);
         if (*tics == (time_t)-1) 
                 return (0); 
 
-        localtime_r(tics, tm); 
+        // FIXME localtime_r(tics, tm); 
 
         return (1); 
 } 
@@ -77,7 +81,7 @@ int main(int argc, char **argv)
 	time_t warn = 10 * 60;
 	time_t crit = 30 * 60;
 
-	while ((c = getopt(argc, argv, "N:D:w:c:S:")) != EOF) {
+	while ((c = getopt(argc, argv, "N:D:w:c:S:d")) != EOF) {
 		switch (c) {
 			case 'N':
 				ns = strdup(optarg);
@@ -94,13 +98,20 @@ int main(int argc, char **argv)
 			case 'c':
 				crit = atol(optarg);
 				break;
+			case 'd':
+				debug = 1;
+				break;
 			default:
 				puts("USAGE");
 				exit(2);
 		}
 	}
 
-	setnameserver(ns);
+	rc = setnameserver(ns, debug);
+	if (rc == 0) {
+		sprintf(msg, "Can't find name server for %s", ns);
+		terminate(UNKNOWN, msg);
+	}
 
 	rc = getattributebyname(domain, ATTRIBUTE, datestring, sizeof(datestring));
 	if (rc == 0) {
@@ -121,6 +132,15 @@ int main(int argc, char **argv)
 
 	time(&now); 
 	time_t diffsecs = now - tics;
+
+	if (debug) {
+		printf("datestring from DNS: %s\n", datestring);
+		printf("fixed string x  DNS: %s\n", fixdate);
+		printf("ctime now          : %s", ctime(&now));
+		printf("tics now           : %ld\n", now);
+		printf("tics from DNS date : %ld\n", tics);
+		printf("tics difference    : %ld\n", diffsecs);
+	}
 
 	tics2comment(now, tics, buf);
 	sprintf(msg, "last updated on slave [%s] %ld seconds (%s) ago",
