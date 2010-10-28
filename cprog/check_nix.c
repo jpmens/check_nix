@@ -14,7 +14,7 @@
 #include "ns.h"
 
 
-#define PORT	53
+#define DRIFT 2
 
 #define DOMAIN		"ix.dnsbl.manitu.net."
 #define ATTRIBUTE	"heartbeat"
@@ -76,12 +76,26 @@ int main(int argc, char **argv)
 	struct tm tm; 
 	time_t tics, now; 
 	void tics2comment(time_t old, time_t new, char *buf);
-	char *domain = DOMAIN;
+	char *domain = DOMAIN, *progname = *argv;
 	char *ns = "127.0.0.1";
 	time_t warn = 10 * 60;
 	time_t crit = 30 * 60;
 
-	while ((c = getopt(argc, argv, "N:D:w:c:S:d")) != EOF) {
+	while (1) {
+		static struct option long_opts[] = {
+		{ "nameserver", 1, 0, 'N' },
+		{ "domain",     1, 0, 'D' },
+		{ "warning",    1, 0, 'w' },
+		{ "critical",   1, 0, 'c' },
+		{ "statusfile", 1, 0, 'S' },
+		{ "debug",      0, 0, 'd' },
+		{ NULL,    0, 0, 0 }
+		};
+		int oix;
+
+		if ((c = getopt_long(argc, argv, "N:D:w:c:S:d", long_opts, &oix)) == -1)
+			break;
+
 		switch (c) {
 			case 'N':
 				ns = strdup(optarg);
@@ -102,8 +116,8 @@ int main(int argc, char **argv)
 				debug = 1;
 				break;
 			default:
-				puts("USAGE");
-				exit(2);
+				fprintf(stderr, "Usage: %s [-d] [-N address] [-D domain] [-w warn seconds] [-c critical seconds] [-S statusfile]\n", progname); 
+				exit(127); 
 		}
 	}
 
@@ -132,6 +146,7 @@ int main(int argc, char **argv)
 
 	time(&now); 
 	time_t diffsecs = now - tics;
+	diffsecs = (diffsecs - DRIFT < 0) ? 0 : diffsecs;
 
 	if (debug) {
 		printf("datestring from DNS: %s\n", datestring);
