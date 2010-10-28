@@ -26,9 +26,10 @@ int setnameserver(char *srv, int debug)
 	int nscount = 0, n; 
 
 	memset(&hint, 0, sizeof (struct addrinfo)); 
-	hint.ai_family = AF_INET; 
-	// hint.ai_family = AF_UNSPEC; 
-	hint.ai_socktype = SOCK_DGRAM; 
+	hint.ai_family		= AF_INET; 
+	hint.ai_socktype	= SOCK_DGRAM; 
+	hint.ai_flags		= 0; 
+	hint.ai_protocol	= 0; 
 
 	if (debug) {
 		fprintf(stderr, "Find address for srv == %s\n", srv);
@@ -48,16 +49,17 @@ int setnameserver(char *srv, int debug)
 	} 
 
 	for (r = ans; r && (nscount < MAXNS); r = r->ai_next) { 
-#if 0 
-		char host[NI_MAXHOST], service[NI_MAXSERV]; 
-		s = getnameinfo(r->ai_addr, r->ai_addrlen, 
+
+		if (debug) {
+			char host[NI_MAXHOST], service[NI_MAXSERV]; 
+			s = getnameinfo(r->ai_addr, r->ai_addrlen, 
 				host, NI_MAXHOST, service, NI_MAXSERV, NI_NUMERICSERV); 
-		if (s == 0) { 
-			fprintf(stderr, "\thost %s:%s\n", host, service); 
-		} else { 
-			fprintf(stderr, "getnameinfo: %s\n", gai_strerror(s)); 
-		} 
-#endif 
+			if (s == 0) { 
+				fprintf(stderr, "\thost %s:%s\n", host, service); 
+			} else { 
+				fprintf(stderr, "getnameinfo: %s\n", gai_strerror(s)); 
+			} 
+		}
 		if (r->ai_family == AF_INET) { 
 			struct sockaddr_in *ipv4 = (struct sockaddr_in *)r->ai_addr; 
 			struct sockaddr_in *nsp = &ns_list[nscount]; 
