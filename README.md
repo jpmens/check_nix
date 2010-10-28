@@ -49,8 +49,7 @@ administrator's monitoring interface that something is wrong.
 
 # OPTIONS
 
-*check\_nix* understands the following options. (The C version
-currently supports the short options only.)
+*check\_nix* understands the following options.
 
 -D *domain*, --domain=*domain*
 :   Specify the domain for which to look up the TXT record in the
